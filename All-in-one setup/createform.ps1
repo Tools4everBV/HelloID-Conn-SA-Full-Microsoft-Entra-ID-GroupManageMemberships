@@ -35,18 +35,16 @@ $tmpName = @'
 EntraIdTenantId
 '@ 
 $tmpValue = @'
-6b5db95a-9873-426a-90d8-b84baa033a05
 '@ 
-$globalHelloIDVariables.Add([PSCustomObject]@{name = $tmpName; value = $tmpValue; secret = "False"});
+$globalHelloIDVariables.Add([PSCustomObject]@{name = $tmpName; value = $tmpValue; secret = "True"});
 
 #Global variable #4 >> EntraIdAppId
 $tmpName = @'
 EntraIdAppId
 '@ 
 $tmpValue = @'
-cb1b4227-62c7-40a9-8984-9c19c989df2f
 '@ 
-$globalHelloIDVariables.Add([PSCustomObject]@{name = $tmpName; value = $tmpValue; secret = "False"});
+$globalHelloIDVariables.Add([PSCustomObject]@{name = $tmpName; value = $tmpValue; secret = "True"});
 
 
 #make sure write-information logging is visual
