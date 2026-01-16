@@ -200,14 +200,12 @@ try {
 
     foreach ($userToAdd in $usersToAdd) {
         try {
-            #region Add member to group
-            # Microsoft docs: https://learn.microsoft.com/en-us/graph/api/group-post-members?view=graph-rest-1.0&tabs=http
+            # Add member to group
+            # API docs: https://learn.microsoft.com/en-us/graph/api/group-post-members?view=graph-rest-1.0&tabs=http
             $actionMessage = "adding user [$($userToAdd.displayName)] with id [$($userToAdd.id)] as member to group [$($group.displayName)] with id [$($group.id)]"
-   
             $addGroupMemberBody = @{ 
                 "@odata.id" = "https://graph.microsoft.com/v1.0/users/$($userToAdd.id)"
             }
-
             $addGroupMemberSplatParams = @{
                 Uri         = "https://graph.microsoft.com/v1.0/groups/$($group.id)/members/`$ref"
                 Headers     = $headers
@@ -216,14 +214,8 @@ try {
                 Verbose     = $false
                 ErrorAction = "Stop"
             }
-
             $addGroupMemberResponse = Invoke-RestMethod @addGroupMemberSplatParams
-        
             Write-Verbose "Added user [$($userToAdd.displayName)] with id [$($userToAdd.id)] as member to group [$($group.displayName)] with id [$($group.id)]."
-            #endregion Add member to group
-    
-            #region Send auditlog to HelloID
-            $actionMessage = "sending auditlog to HelloID"
     
             $Log = @{
                 Action            = "GrantMembership" # optional. ENUM (undefined = default) 
@@ -234,7 +226,6 @@ try {
                 TargetIdentifier  = $group.id # optional (free format text)
             }
             Write-Information -Tags "Audit" -MessageData $log
-            #endregion Send auditlog to HelloID
         }
         catch {
             $ex = $PSItem
@@ -250,7 +241,6 @@ try {
             }
 
             if ($auditMessage -like "*One or more added object references already exist for the following modified properties: 'members'*") {
-                #region Send auditlog to HelloID
                 $Log = @{
                     Action            = "GrantMembership" # optional. ENUM (undefined = default) 
                     System            = "EntraID" # optional (free format text) 
@@ -260,12 +250,8 @@ try {
                     TargetIdentifier  = $group.id # optional (free format text)
                 }
                 Write-Information -Tags "Audit" -MessageData $log
-                #endregion Send auditlog to HelloID
             }
             else {
-                Write-Warning $warningMessage
-
-                #region Send auditlog to HelloID
                 $Log = @{
                     Action            = "GrantMembership" # optional. ENUM (undefined = default) 
                     System            = "EntraID" # optional (free format text) 
@@ -275,8 +261,7 @@ try {
                     TargetIdentifier  = $group.id # optional (free format text)
                 }
                 Write-Information -Tags "Audit" -MessageData $log
-                #endregion Send auditlog to HelloID
-
+                Write-Warning $warningMessage
                 Write-Error $auditMessage
             }
         }
@@ -284,10 +269,9 @@ try {
 
     foreach ($userToRemove in $usersToRemove) {
         try {
-            #region Remove member from group
-            # Microsoft docs: https://learn.microsoft.com/en-us/graph/api/group-delete-members?view=graph-rest-1.0&tabs=http
+            # Remove member from group
+            # API docs: https://learn.microsoft.com/en-us/graph/api/group-delete-members?view=graph-rest-1.0&tabs=http
             $actionMessage = "removing user [$($userToRemove.displayName)] with id [$($userToRemove.id)] as member from group [$($group.displayName)] with id [$($group.id)]"
-   
             $removeGroupMemberSplatParams = @{
                 Uri         = "https://graph.microsoft.com/v1.0/groups/$($group.id)/members/$($userToRemove.id)/`$ref"
                 Headers     = $headers
@@ -297,13 +281,8 @@ try {
             }
     
             $removeGroupMemberResponse = Invoke-RestMethod @removeGroupMemberSplatParams
-        
             Write-Verbose "Removed user [$($userToRemove.displayName)] with id [$($userToRemove.id)] as member from group [$($group.displayName)] with id [$($group.id)]."
-            #endregion Remove member from group
-    
-            #region Send auditlog to HelloID
-            $actionMessage = "sending auditlog to HelloID"
-    
+
             $Log = @{
                 Action            = "RevokeMembership" # optional. ENUM (undefined = default) 
                 System            = "EntraID" # optional (free format text) 
@@ -313,7 +292,6 @@ try {
                 TargetIdentifier  = $group.id # optional (free format text)
             }
             Write-Information -Tags "Audit" -MessageData $log
-            #endregion Send auditlog to HelloID
         }
         catch {
             $ex = $PSItem
@@ -329,7 +307,6 @@ try {
             }
 
             if ($auditMessage -like "*ResourceNotFound*" -and $auditMessage -like "*$($group.id)*") {
-                #region Send auditlog to HelloID
                 $Log = @{
                     Action            = "RevokeMembership" # optional. ENUM (undefined = default) 
                     System            = "EntraID" # optional (free format text) 
@@ -339,12 +316,8 @@ try {
                     TargetIdentifier  = $group.id # optional (free format text)
                 }
                 Write-Information -Tags "Audit" -MessageData $log
-                #endregion Send auditlog to HelloID
             }
             else {
-                Write-Warning $warningMessage
-
-                #region Send auditlog to HelloID
                 $Log = @{
                     Action            = "RevokeMembership" # optional. ENUM (undefined = default) 
                     System            = "EntraID" # optional (free format text) 
@@ -354,8 +327,7 @@ try {
                     TargetIdentifier  = $group.id # optional (free format text)
                 }
                 Write-Information -Tags "Audit" -MessageData $log
-                #endregion Send auditlog to HelloID
-
+                Write-Warning $warningMessage
                 Write-Error $auditMessage
             }
         }
@@ -367,12 +339,21 @@ catch {
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
         $errorObj = Resolve-MicrosoftGraphAPIError -ErrorObject $ex
         $auditMessage = "Error $($actionMessage). Error: $($errorObj.FriendlyMessage)"
-        Write-Warning "Error at Line [$($errorObj.ScriptLineNumber)]: $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
+        $warningMessage = "Error at Line [$($errorObj.ScriptLineNumber)]: $($errorObj.Line). Error: $($errorObj.ErrorDetails)"
     }
     else {
         $auditMessage = "Error $($actionMessage). Error: $($ex.Exception.Message)"
-        Write-Warning "Error at Line [$($ex.InvocationInfo.ScriptLineNumber)]: $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
+        $warningMessage = "Error at Line [$($ex.InvocationInfo.ScriptLineNumber)]: $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
-    
+    $Log = @{
+        Action            = "undefined" # optional. ENUM (undefined = default) 
+        System            = "EntraID" # optional (free format text) 
+        Message           = $auditMessage # required (free format text) 
+        IsError           = $true # optional. Elastic reporting purposes only. (default = $false. $true = Executed action returned an error) 
+        TargetDisplayName = $group.displayName # optional (free format text)
+        TargetIdentifier  = $group.id # optional (free format text)
+    }
+    Write-Information -Tags "Audit" -MessageData $log
+    Write-Warning $warningMessage
     Write-Error $auditMessage
 }
